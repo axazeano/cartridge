@@ -44,7 +44,7 @@ from cartridge.shop.fields import MoneyField
 from cartridge.shop.forms import ProductAdminForm, ProductVariationAdminForm
 from cartridge.shop.forms import ProductVariationAdminFormset
 from cartridge.shop.forms import DiscountAdminForm, ImageWidget, MoneyWidget
-from cartridge.shop.models import Category, Product, ProductImage
+from cartridge.shop.models import Category, Product, ProductImage, ShippingProvider
 from cartridge.shop.models import ProductVariation, ProductOption, Order
 from cartridge.shop.models import OrderItem, Sale, DiscountCode
 from cartridge.shop.views import HAS_PDF
@@ -246,7 +246,7 @@ class ProductAdmin(DisplayableAdmin):
             # the required ``ProductVariation``
             if settings.USE_MODELTRANSLATION:
                 from django.utils.datastructures import SortedDict
-                from modeltranslation.utils import (build_localized_fieldname
+                from .utils import (build_localized_fieldname
                                                     as _loc)
                 for opt_name in options:
                     for opt_value in options[opt_name]:
@@ -366,6 +366,17 @@ class DiscountCodeAdmin(admin.ModelAdmin):
     )
 
 
+class ShippingProviderAdmin(admin.ModelAdmin):
+    list_display = ("provider", "name", "token_paraphrase", "token", "token_last_update_date",
+                    "token_change_reason", "token_change_by",)
+    # list_editable = ("provider", "name", "token_paraphrase", "token_change_reason",)
+    readonly_fields = ('token', 'token_last_update_date', 'token_change_by')
+    def save_model(self, request, obj, form, change):
+        obj.token_change_by = request.user
+        obj.save()
+
+
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 if settings.SHOP_USE_VARIATIONS:
@@ -373,3 +384,4 @@ if settings.SHOP_USE_VARIATIONS:
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Sale, SaleAdmin)
 admin.site.register(DiscountCode, DiscountCodeAdmin)
+admin.site.register(ShippingProvider, ShippingProviderAdmin)
